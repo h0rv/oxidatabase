@@ -1,5 +1,5 @@
-mod repl;
+mod core;
 
 fn main() {
-    repl::start();
+    core::repl::start();
 }
