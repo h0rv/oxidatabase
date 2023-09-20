@@ -1,12 +1,9 @@
-use std::error;
-use std::fmt;
-
 use std::io::{self};
 use std::io::{BufRead, StdinLock, StdoutLock, Write};
 
-// const PROMPT: &str = "OxI(DB) ❯ ";
-// const PROMPT: &str = "OxI(DB) ⚛ ";
-const PROMPT: &str = "oxidb ⚙ ";
+const PROMPT: &str = " oxi(db) ❯ ";
+// const PROMPT: &str = " OxI(DB) ⚛ ";
+// const PROMPT: &str = " oxidb ⚙ ";
 
 const HELP_MSG: &str = "
 Available commands:
@@ -28,6 +25,7 @@ enum MetaCommandError {
 #[derive(Debug)]
 enum ParserError {
     EMPTY,
+    SYNTAX,
     UNRECOGNIZED,
     GENERIC,
 }
@@ -38,9 +36,30 @@ enum StatementType {
     SELECT,
 }
 
+const USERNAME_SIZE: usize = 32;
+const EMAIL_SIZE: usize = 32;
+#[derive(Debug)]
+struct Record {
+    // Support different record schemas
+    id: u32,
+    username: [char; USERNAME_SIZE],
+    email: [char; EMAIL_SIZE],
+}
+
+impl Default for Record {
+    fn default() -> Self {
+        Self {
+            id: 0,
+            username: ['0' as char; USERNAME_SIZE],
+            email: ['0' as char; EMAIL_SIZE],
+        }
+    }
+}
+
 #[derive(Debug)]
 struct Statement {
     stype: StatementType,
+    record: Option<Record>,
 }
 
 #[derive(Debug)]
@@ -78,19 +97,71 @@ fn handle_meta_command(input: &str, stdout_lock: &mut StdoutLock) -> Result<(), 
 
 fn parse_input(input: &str) -> Result<Statement, ParserError> {
     if input.starts_with("insert") {
+        let mut record = Record::default();
+
+        let mut index = 0;
+        for s in input.split(" ") {
+            println!("{}", s);
+            match index {
+                0 => {
+                    // skip insert
+                    ();
+                }
+                1 => {
+                    record.id = match s.parse() {
+                        Ok(id) => id,
+                        Err(err) => {
+                            eprintln!("Error parsing {} into the record id: {}", s, err);
+                            return Err(ParserError::SYNTAX);
+                        }
+                    };
+                }
+                2 => {
+                    for (i, c) in s.chars().enumerate() {
+                        if i >= record.username.len() {
+                            break;
+                        }
+                        record.username[i] = c;
+                    }
+                }
+                3 => {
+                    for (i, c) in s.chars().enumerate() {
+                        if i >= record.email.len() {
+                            break;
+                        }
+                        record.email[i] = c;
+                    }
+                }
+                // TODO: Currently fixed length for record ([0] == insert)
+                _ => {
+                    eprintln!("Too many arguments for insert");
+                    return Err(ParserError::SYNTAX);
+                }
+            }
+            index += 1;
+        }
+
+        if index == 0 {
+            eprintln!("No arguments given for insert");
+            return Err(ParserError::SYNTAX);
+        }
+
         return Ok(Statement {
             stype: StatementType::INSERT,
+            record: Some(record),
         });
     }
     if input.starts_with("select") {
         return Ok(Statement {
             stype: StatementType::SELECT,
+            record: None,
         });
     }
 
     if input == "" {
         return Err(ParserError::EMPTY);
     }
+
     return Err(ParserError::UNRECOGNIZED);
 }
 
@@ -173,6 +244,10 @@ pub fn start() {
         let statement = match parse_input(input_ref) {
             Ok(statement) => statement,
             Err(ParserError::EMPTY) => continue,
+            Err(ParserError::SYNTAX) => {
+                println!("Invalid syntax: {}", input);
+                continue;
+            }
             Err(ParserError::UNRECOGNIZED) => {
                 println!("Unrecognized statement: {}", input);
                 continue;
