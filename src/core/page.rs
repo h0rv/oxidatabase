@@ -1,5 +1,5 @@
 use std::{
-    alloc::{alloc, Layout},
+    alloc::{alloc, dealloc, Layout},
     mem::{align_of, size_of},
 };
 
@@ -10,7 +10,7 @@ pub const MAX_RECORDS: usize = SIZE / record::SIZE;
 
 pub type Pointer = Option<*mut isize>;
 
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct Page {
     pub pointer: Pointer,
 }
@@ -22,8 +22,21 @@ impl Page {
         Default::default()
     }
 
-    pub fn alloc(self: &mut Self) {
+    pub fn is_allocated(&self) -> bool {
+        return self.pointer.is_some();
+    }
+
+    pub fn allocate(&mut self) {
         let page_ptr = unsafe { alloc(PAGE_LAYOUT) } as *mut isize;
         self.pointer = Some(page_ptr);
+    }
+}
+
+// This trivial implementation of `drop` adds a print to console.
+impl Drop for Page {
+    fn drop(&mut self) {
+        if self.is_allocated() {
+            unsafe { dealloc(self.pointer.unwrap() as *mut u8, PAGE_LAYOUT) };
+        }
     }
 }

@@ -1,5 +1,6 @@
 use std::{
     alloc::{alloc, Layout},
+    iter,
     mem::size_of,
 };
 
@@ -15,14 +16,19 @@ const WORD_SIZE: usize = size_of::<usize>();
 #[derive(Debug)]
 pub struct Table {
     pub num_records: usize,
-    pub pages: [Page; MAX_PAGES],
+    pub pages: Vec<Page>,
 }
 
 impl Default for Table {
     fn default() -> Self {
+        let mut pages: Vec<Page> = Vec::with_capacity(MAX_PAGES);
+        for _ in 0..MAX_PAGES {
+            pages.push(Page::new());
+        }
+
         Self {
             num_records: 0,
-            pages: [Page::new(); MAX_PAGES],
+            pages: iter::repeat_with(|| Page::new()).take(MAX_PAGES).collect(),
         }
     }
 }
@@ -39,12 +45,12 @@ impl Table {
     pub fn record_slot(self: &mut Self, record_num: usize) -> Pointer {
         let page_num = record_num / page::MAX_RECORDS;
 
-        let mut page = self.pages[page_num];
+        let mut page = unsafe { self.pages.get_unchecked_mut(page_num) }; // Vector is fixed size
 
-        if page.pointer.is_none() {
+        if !page.is_allocated() {
             // Allocate memory for page
             println!("Allocating page number {}", page_num);
-            page.alloc();
+            page.allocate();
         }
 
         // Get page pointer
