@@ -1,4 +1,7 @@
-use std::mem::size_of;
+use std::{
+    fmt::{self, Display},
+    mem::size_of,
+};
 
 const USERNAME_SIZE: usize = 32;
 const EMAIL_SIZE: usize = 255;
@@ -24,6 +27,26 @@ impl Default for Record {
             username: [0; USERNAME_SIZE],
             email: [0; EMAIL_SIZE],
         }
+    }
+}
+
+fn username_to_string(arr: &[u8; USERNAME_SIZE]) -> String {
+    String::from_utf8_lossy(arr).to_string()
+}
+
+fn email_to_string(arr: &[u8; EMAIL_SIZE]) -> String {
+    String::from_utf8_lossy(arr).to_string()
+}
+
+impl Display for Record {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}, {}, {}",
+            self.id,
+            username_to_string(&self.username),
+            email_to_string(&self.email)
+        )
     }
 }
 

@@ -38,11 +38,11 @@ pub fn start() {
                 Ok(()) => continue,
                 Err(metacmds::Error::IGNORE) => continue,
                 Err(metacmds::Error::UNRECOGNIZED) => {
-                    println!("Unrecognized command: {}", input);
+                    eprintln!("Unrecognized command: {}", input);
                     continue;
                 }
                 Err(metacmds::Error::GENERIC) => {
-                    println!("Error handling command. Exiting...");
+                    eprintln!("Error handling command. Exiting...");
                     return;
                 }
                 Err(metacmds::Error::EXIT) => return,
@@ -53,19 +53,33 @@ pub fn start() {
             Ok(statement) => statement,
             Err(parser::Error::EMPTY) => continue,
             Err(parser::Error::SYNTAX) => {
-                println!("Invalid syntax: {}", input);
+                eprintln!("Invalid syntax: {}", input);
                 continue;
             }
             Err(parser::Error::UNRECOGNIZED) => {
-                println!("Unrecognized statement: {}", input);
+                eprintln!("Unrecognized statement: {}", input);
                 continue;
             }
             Err(parser::Error::GENERIC) => {
-                println!("Error handling command. Exiting...");
+                eprintln!("Error handling command. Exiting...");
                 return;
             }
         };
 
-        query_engine::handler(&mut table, &statement);
+        match query_engine::handler(&mut table, &statement) {
+            Ok(()) => continue,
+            Err(query_engine::Error::TABLE_FULL) => {
+                eprintln!("Table is full: {}", input);
+                continue;
+            }
+            Err(query_engine::Error::SLOT_FAILURE) => {
+                eprintln!("Failed to get slot in page: {}", input);
+                continue;
+            }
+            Err(query_engine::Error::GENERIC) => {
+                eprintln!("Error executing query. Exiting...");
+                return;
+            }
+        }
     }
 }

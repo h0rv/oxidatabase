@@ -62,8 +62,7 @@ pub fn parse(input: &str) -> Result<Statement, Error> {
             return Err(Error::SYNTAX);
         }
 
-        println!("Parsed input into {:?}", record);
-        println!("Record size: {}", record::SIZE);
+        // println!("Parsed input into {:?}", record);
 
         return Ok(Statement {
             stype: statement::Type::INSERT,

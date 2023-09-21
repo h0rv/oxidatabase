@@ -64,14 +64,13 @@ impl Table {
 
         // Calculate location of record
         let record_offset = record_num % page::MAX_RECORDS;
-        let byte_offset = record_offset * record::SIZE;
-        let word_offset = (byte_offset / WORD_SIZE) as isize;
+        let byte_offset = (record_offset * record::SIZE) as isize;
 
-        println!("Page address: {:p}", page_ptr);
+        // println!("Page address: {:p}", page_ptr);
 
-        page_ptr = unsafe { page_ptr.offset(word_offset) };
+        page_ptr = unsafe { page_ptr.offset(byte_offset) };
 
-        println!("page addr + word offset ({}) = {:p}", word_offset, page_ptr);
+        // println!("page addr + byte offset ({}) = {:p}", byte_offset, page_ptr);
 
         return Some(page_ptr);
     }
