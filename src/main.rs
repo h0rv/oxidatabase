@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 mod core;
 
 fn main() {

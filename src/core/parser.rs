@@ -1,4 +1,7 @@
-use crate::core::types::*;
+use crate::core::{
+    record::{self, Record},
+    statement::{self, Statement},
+};
 
 #[derive(Debug)]
 pub enum Error {
@@ -10,11 +13,11 @@ pub enum Error {
 
 pub fn parse(input: &str) -> Result<Statement, Error> {
     if input.starts_with("insert") {
-        let mut record = Record::default();
+        let mut record = Record::new();
 
         let mut index = 0;
         for s in input.split(" ") {
-            println!("{}", s);
+            // println!("{}", s);
             match index {
                 0 => {
                     // skip insert
@@ -30,19 +33,19 @@ pub fn parse(input: &str) -> Result<Statement, Error> {
                     };
                 }
                 2 => {
-                    for (i, c) in s.chars().enumerate() {
+                    for (i, b) in s.as_bytes().iter().enumerate() {
                         if i >= record.username.len() {
                             break;
                         }
-                        record.username[i] = c;
+                        record.username[i] = *b;
                     }
                 }
                 3 => {
-                    for (i, c) in s.chars().enumerate() {
+                    for (i, b) in s.as_bytes().iter().enumerate() {
                         if i >= record.email.len() {
                             break;
                         }
-                        record.email[i] = c;
+                        record.email[i] = *b;
                     }
                 }
                 // TODO: Currently fixed length for record ([0] == insert)
@@ -59,14 +62,17 @@ pub fn parse(input: &str) -> Result<Statement, Error> {
             return Err(Error::SYNTAX);
         }
 
+        println!("Parsed input into {:?}", record);
+        println!("Record size: {}", record::SIZE);
+
         return Ok(Statement {
-            stype: StatementType::INSERT,
+            stype: statement::Type::INSERT,
             record: Some(record),
         });
     }
     if input.starts_with("select") {
         return Ok(Statement {
-            stype: StatementType::SELECT,
+            stype: statement::Type::SELECT,
             record: None,
         });
     }

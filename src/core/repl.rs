@@ -1,21 +1,6 @@
-use crate::core::types::*;
-use crate::core::{metacmds, parser};
+use std::io::{self, Stdin};
 
-use std::io::{self};
-use std::io::{Stdin};
-
-fn query_engine(statement: &Statement) {
-    match statement.stype {
-        StatementType::INSERT => {
-            println!("Executing insert");
-            return;
-        }
-        StatementType::SELECT => {
-            println!("Executing select");
-            return;
-        }
-    }
-}
+use crate::core::{metacmds, parser, query_engine, statement, table::Table};
 
 fn read_input(stdin: &mut Stdin) -> Result<String, io::Error> {
     let mut input = String::new();
@@ -28,6 +13,8 @@ fn read_input(stdin: &mut Stdin) -> Result<String, io::Error> {
 }
 
 pub fn start() {
+    let mut table = Box::new(Table::new());
+
     let mut stdin = io::stdin();
     let mut stdout = io::stdout();
 
@@ -79,6 +66,6 @@ pub fn start() {
             }
         };
 
-        query_engine(&statement);
+        query_engine::handler(&mut table, &statement);
     }
 }

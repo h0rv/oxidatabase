@@ -1,6 +1,6 @@
+use std::io::{self, Stdout, Write};
+
 use crate::core::strings;
-use std::io;
-use std::io::{Stdout, Write};
 
 #[derive(Debug)]
 pub enum Error {
