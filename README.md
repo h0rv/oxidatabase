@@ -1,6 +1,6 @@
 # oxidatabase
 
-  A Rusty SQLite clone created for learning and fun.
+  A Rusty SQLite clone built for learning and fun.
 
 ## Project Structure
 
